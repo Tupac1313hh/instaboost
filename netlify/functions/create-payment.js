@@ -30,6 +30,14 @@ exports.handler = async (event) => {
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) return json(500, { error: 'MP_ACCESS_TOKEN não configurado no servidor' });
 
+  // Diagnóstico seguro — só expõe o prefixo (sempre TEST- ou APP_USR-)
+  const tokenDiag = {
+    length: token.length,
+    prefix: token.slice(0, 10),
+    hasWhitespace: /\s/.test(token),
+    looksValid: /^(TEST|APP_USR)-/.test(token),
+  };
+
   let body;
   try { body = JSON.parse(event.body || '{}'); }
   catch { return json(400, { error: 'Body inválido' }); }
@@ -82,6 +90,7 @@ exports.handler = async (event) => {
       return json(res.status, {
         error: data.message || data.error || 'Erro ao gerar PIX no Mercado Pago',
         cause: data.cause || null,
+        tokenDiag,
       });
     }
 
